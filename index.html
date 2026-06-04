@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>一二三四五</title>
+<title>易经智慧学习系统</title>
 <style>
   :root { --bg: #f5f7fa; --card: #ffffff; --text: #333333; --accent: #2b5c8f; --secondary: #e8eef5; --success: #4caf50; --error: #f44336; --safe-bottom: env(safe-area-inset-bottom, 0px); }
   @media (prefers-color-scheme: dark) { :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --accent: #6ba3d6; --secondary: #2c2c2c; } }
@@ -18,19 +18,23 @@
 
   .knowledge-layout { display: flex; gap: 16px; }
   .toc-panel { width: 100%; }
+  /* 修复点：移动端默认隐藏内容区 */
   .content-panel { width: 100%; display: none; }
+  /* 修复点：移动端激活时显示内容区 */
+  .content-panel.active { display: block; animation: fadeIn 0.3s ease; }
+  
   @media (min-width: 768px) { 
     .toc-panel { width: 280px; position: sticky; top: 16px; height: fit-content; max-height: 85vh; overflow-y: auto; } 
-    .content-panel { width: calc(100% - 296px); display: block; } 
+    .content-panel { width: calc(100% - 296px); display: block; } /* 桌面端始终显示 */
   }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   
   .card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
   .tag { display: inline-block; background: var(--secondary); color: var(--accent); padding: 4px 10px; border-radius: 6px; font-size: 12px; margin-right: 8px; font-weight: bold; }
   
-  /* 核心：图片渲染样式 */
   .diagram-img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0; display: block; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid var(--secondary); }
-
   .ref-link { color: var(--accent); text-decoration: underline; cursor: pointer; font-weight: 500; }
+  
   .collapsible-section { margin-bottom: 12px; }
   .collapsible-header { padding: 14px; background: var(--secondary); border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; user-select: none; }
   .collapsible-header::after { content: '▼'; font-size: 12px; transition: transform 0.3s; }
@@ -48,9 +52,16 @@
   .option.correct { border-color: var(--success); background: rgba(76, 175, 80, 0.1); }
   .option.wrong { border-color: var(--error); background: rgba(244, 67, 54, 0.1); }
   .hidden { display: none !important; }
+  
   button.action { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-size: 16px; margin-top: 16px; cursor: pointer; font-weight: bold; }
   button.action:active { opacity: 0.8; }
   button.secondary-btn { background: var(--secondary); color: var(--text); width: auto; padding: 10px 20px; margin-bottom: 16px; font-size: 14px; cursor: pointer; border: none; border-radius: 8px; }
+  
+  /* 移动端专属返回按钮 */
+  .mobile-back-btn { display: none; }
+  @media (max-width: 767px) {
+    .mobile-back-btn { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; font-weight: bold; color: var(--accent); background: transparent; padding: 0; width: auto; }
+  }
 
   .sandbox-input { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid var(--secondary); border-radius: 8px; font-size: 16px; background: var(--bg); color: var(--text); }
   .sandbox-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
@@ -153,7 +164,15 @@ function switchView(view, el) {
   document.getElementById(`view-${view}`).classList.remove('hidden');
   document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'));
   if(el) el.classList.add('active');
-  if(view === 'knowledge') { renderToc(); if(window.innerWidth >= 768 && currentKnowledgeId) showContent(currentKnowledgeId, true); }
+  if(view === 'knowledge') { 
+    renderToc(); 
+    // 切换回知识库时，如果在移动端且没有选中内容，重置视图
+    if(window.innerWidth < 768) {
+       document.getElementById('contentDetail').classList.remove('active');
+    } else {
+       if(currentKnowledgeId) showContent(currentKnowledgeId, true); 
+    }
+  }
   if(view === 'practice') { 
     if (practiceState && practiceState.pool && practiceState.index < practiceState.pool.length) renderCurrentQuestion(); 
     else { if(practiceState) { practiceState = null; localStorage.removeItem('practiceState'); } renderPracticeList(); }
@@ -172,7 +191,7 @@ function toggleBaihua(id) {
   if(arrow) arrow.innerText = el.classList.contains('collapsed') ? '▼' : '▲';
 }
 
-// 🔥 核心：自动解析 [img:文件名] 为真实图片
+// 🔥 核心修复：移动端正确显示内容并添加返回按钮
 function showContent(id, isAutoLoad = false) {
   const k = KNOWLEDGE_DATA.find(x => x.id === id); if(!k) return;
   
@@ -186,10 +205,22 @@ function showContent(id, isAutoLoad = false) {
   let sourceHtml = k.source ? `<div class="source-tag">📜 文献来源：${k.source}</div>` : '';
   
   const detail = document.getElementById('contentDetail');
-  detail.innerHTML = `<h2 style="margin-bottom:12px;">${k.title}</h2><div class="tag">${k.phase}</div><div style="margin-top:16px; line-height:1.8;">${contentHtml}</div>${baihuaHtml}${sourceHtml}`;
-  detail.classList.remove('hidden');
+  // 修复点：在内容顶部添加移动端专属的返回按钮
+  detail.innerHTML = `<button class="secondary-btn mobile-back-btn" onclick="hideContent()">← 返回目录</button><h2 style="margin-bottom:12px;">${k.title}</h2><div class="tag">${k.phase}</div><div style="margin-top:16px; line-height:1.8;">${contentHtml}</div>${baihuaHtml}${sourceHtml}`;
+  
+  // 修复点：添加 active 类以在移动端触发 display: block
+  detail.classList.add('active');
   localStorage.setItem('last_read_kid', id); currentKnowledgeId = id;
-  if(window.innerWidth < 768 && !isAutoLoad) detail.scrollIntoView({ behavior: 'smooth' });
+  
+  if(window.innerWidth < 768 && !isAutoLoad) {
+     detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// 🔥 新增：移动端隐藏内容，返回目录列表
+function hideContent() {
+  document.getElementById('contentDetail').classList.remove('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function handleSearch(query) {
