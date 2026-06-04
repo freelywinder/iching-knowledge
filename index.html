@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>一二三四五</title>
+<style>
+  :root { --bg: #f5f7fa; --card: #ffffff; --text: #333333; --accent: #2b5c8f; --secondary: #e8eef5; --success: #4caf50; --error: #f44336; --safe-bottom: env(safe-area-inset-bottom, 0px); }
+  @media (prefers-color-scheme: dark) { :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --accent: #6ba3d6; --secondary: #2c2c2c; } }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "HarmonyOS Sans", system-ui, sans-serif; background: var(--bg); color: var(--text); padding-bottom: calc(60px + var(--safe-bottom)); line-height: 1.8; font-size: 16px; }
+  .container { max-width: 1000px; margin: 0 auto; padding: 16px; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: var(--card); display: flex; justify-content: space-around; border-top: 1px solid var(--secondary); padding-bottom: var(--safe-bottom); z-index: 100; }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: var(--text); opacity: 0.6; cursor: pointer; }
+  .nav-btn.active { opacity: 1; color: var(--accent); font-weight: bold; }
+  .knowledge-layout { display: flex; gap: 16px; }
+  .toc-panel { width: 100%; }
+  .content-panel { width: 100%; display: none; }
+  @media (min-width: 700px) { .toc-panel { width: 30%; position: sticky; top: 16px; height: fit-content; max-height: 80vh; overflow-y: auto; } .content-panel { width: 70%; display: block; } }
+  .card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .tag { display: inline-block; background: var(--secondary); color: var(--accent); padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-right: 8px; }
+  .ref-link { color: var(--accent); text-decoration: underline; cursor: pointer; font-weight: 500; }
+  .img-placeholder { width: 100%; height: 200px; background: var(--secondary); display: flex; align-items: center; justify-content: center; border-radius: 8px; margin: 16px 0; color: #666; border: 2px dashed #ccc; }
+  .highlight { background: yellow; color: black; padding: 0 2px; border-radius: 2px; }
+  .collapsible-section { margin-bottom: 12px; }
+  .collapsible-header { padding: 12px; background: var(--secondary); border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+  .collapsible-header::after { content: '▼'; font-size: 12px; transition: transform 0.3s; }
+  .collapsible-header.collapsed::after { transform: rotate(-90deg); }
+  .collapsible-content { overflow: hidden; transition: max-height 0.3s ease; max-height: 5000px; }
+  .collapsible-content.collapsed { max-height: 0; }
+  .baihua-panel { margin-top: 24px; border: 1px solid var(--accent); border-radius: 8px; overflow: hidden; }
+  .baihua-header { padding: 12px; background: rgba(43, 92, 143, 0.1); color: var(--accent); cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+  .baihua-content { overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; max-height: 5000px; padding: 16px; background: rgba(43, 92, 143, 0.03); line-height: 1.9; font-size: 15px; color: #555; }
+  .baihua-content.collapsed { max-height: 0; padding-top: 0; padding-bottom: 0; }
+  .source-tag { margin-top: 24px; padding-top: 12px; border-top: 1px dashed var(--secondary); font-size: 13px; color: #888; font-style: italic; }
+  .option { display: block; padding: 12px; margin: 8px 0; background: var(--secondary); border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+  .hidden { display: none !important; }
+  button.action { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-size: 16px; margin-top: 16px; cursor: pointer; }
+  button.secondary-btn { background: var(--secondary); color: var(--text); width: auto; padding: 8px 16px; margin-bottom: 16px; font-size: 14px; cursor: pointer; }
+  .sheet-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; }
+  .sheet { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-radius: 16px 16px 0 0; padding: 24px; z-index: 201; transform: translateY(100%); transition: transform 0.3s; max-height: 70vh; overflow-y: auto; }
+  .sheet.show { transform: translateY(0); }
+  .search-result-item { padding: 12px; border-bottom: 1px solid var(--secondary); cursor: pointer; }
+  .hexagram-display { display: flex; flex-direction: column-reverse; align-items: center; gap: 8px; margin: 24px auto; width: 140px; padding: 16px; background: var(--secondary); border-radius: 12px; }
+  .hexagram-yao { width: 120px; height: 14px; background: var(--text); border-radius: 2px; }
+  .hexagram-yao.yin { background: transparent; position: relative; }
+  .hexagram-yao.yin::before, .hexagram-yao.yin::after { content: ''; position: absolute; top: 0; width: 50px; height: 14px; background: var(--text); border-radius: 2px; }
+  .hexagram-yao.yin::before { left: 0; }
+  .hexagram-yao.yin::after { right: 0; }
+  .yao-text { margin: 12px 0; padding: 8px; background: rgba(0,0,0,0.03); border-radius: 4px; }
+  .sandbox-input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--secondary); border-radius: 8px; font-size: 16px; background: var(--bg); color: var(--text); }
+  .sandbox-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 20px; }
+  .sandbox-card { background: var(--bg); padding: 16px; border-radius: 8px; text-align: center; border: 1px solid var(--secondary); }
+  .sandbox-card h4 { margin-bottom: 10px; color: var(--accent); }
+  .wuxing-tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 12px; margin-top: 8px; color: white; }
+  .wx-金 { background: #d4af37; } .wx-木 { background: #4caf50; } .wx-水 { background: #2196f3; } .wx-火 { background: #f44336; } .wx-土 { background: #795548; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="view-knowledge">
+    <h2>结构化知识库</h2>
+    <input type="text" id="searchInput" placeholder="搜索卦名、爻辞或概念..." oninput="handleSearch(this.value)" style="width:100%; padding:10px; margin-bottom:16px; border-radius:8px; border:1px solid var(--secondary);">
+    <div class="knowledge-layout">
+      <div class="toc-panel card">
+        <div class="collapsible-section">
+          <div class="collapsible-header collapsed" onclick="toggleSection('searchResults')">🔍 搜索结果 <span id="searchCount"></span></div>
+          <div id="searchResults" class="collapsible-content collapsed"><p style="padding:12px; color:#999;">输入关键词开始搜索</p></div>
+        </div>
+        <div class="collapsible-section">
+          <div class="collapsible-header" onclick="toggleSection('knowledgeDir')">📚 知识库目录</div>
+          <div id="knowledgeDir" class="collapsible-content"></div>
+        </div>
+      </div>
+      <div class="content-panel card" id="contentDetail">
+        <p style="color:#999; text-align:center; margin-top:40px;">← 请从左侧或上方目录选择知识点</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-sandbox" class="hidden">
+    <h2>实战推演沙盘</h2>
+    <div class="card">
+      <p style="margin-bottom:12px;">请输入两个自然数（如：5和12），系统将基于先天数理为您构建演化模型。</p>
+      <input type="number" class="sandbox-input" id="num1" placeholder="第一个数（定上卦）">
+      <input type="number" class="sandbox-input" id="num2" placeholder="第二个数（定下卦与动爻）">
+      <button class="action" onclick="runSandbox()">开始推演</button>
+    </div>
+    <div id="sandboxResult"></div>
+  </div>
+
+  <div id="view-practice" class="hidden"><h2>阶段练习</h2><div id="practiceList"></div><div id="quizArea" class="hidden"></div></div>
+  <div id="view-profile" class="hidden"><h2>学习进度</h2><div class="card" id="resumeCard" style="border-left: 4px solid var(--accent);"></div><div class="card" id="resumeQuizCard" style="border-left: 4px solid var(--success); margin-top:16px;"></div></div>
+</div>
+<div class="bottom-nav">
+  <div class="nav-btn active" onclick="switchView('knowledge', this)">知识库</div>
+  <div class="nav-btn" onclick="switchView('sandbox', this)">推演</div>
+  <div class="nav-btn" onclick="switchView('practice', this)">练习题</div>
+  <div class="nav-btn" onclick="switchView('profile', this)">我的</div>
+</div>
+<div class="sheet-overlay" onclick="closeSheet()"></div>
+<div class="sheet" id="refSheet">
+  <h3 id="sheetTitle"></h3>
+  <p id="sheetContent" style="margin:16px 0;"></p>
+  <button class="action" onclick="goToFullContent()">全屏阅读</button>
+</div>
+
+<script src="knowledge.js"></script>
+<script src="questions.js"></script>
+
+<script>
+var KNOWLEDGE_DATA = window.KNOWLEDGE_DATA || [];
+var QUESTIONS_DATA = window.QUESTIONS_DATA || [];
+var DATA = { knowledge: KNOWLEDGE_DATA, questions: QUESTIONS_DATA };
+
+let currentKnowledgeId = localStorage.getItem('last_read_kid');
+let practiceState = JSON.parse(localStorage.getItem('practiceState') || 'null');
+let sheetTargetId = null;
+let currentRenderedQ = null;
+
+const SINGLE_GUA = [
+  {name: "乾", wuxing: "金", sym: "111"}, {name: "兑", wuxing: "金", sym: "110"},
+  {name: "离", wuxing: "火", sym: "101"}, {name: "震", wuxing: "木", sym: "100"},
+  {name: "巽", wuxing: "木", sym: "011"}, {name: "坎", wuxing: "水", sym: "010"},
+  {name: "艮", wuxing: "土", sym: "001"}, {name: "坤", wuxing: "土", sym: "000"}
+];
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+function toggleSection(id) { const c = document.getElementById(id); const h = c.previousElementSibling; c.classList.toggle('collapsed'); h.classList.toggle('collapsed'); }
+function toggleBaihua(id) { 
+  const el = document.getElementById(id); 
+  el.classList.toggle('collapsed'); 
+  const arrow = document.getElementById('arrow_' + id);
+  if(arrow) arrow.innerText = el.classList.contains('collapsed') ? '▼' : '▲';
+}
+
+function switchView(view, el) {
+  document.querySelectorAll('[id^="view-"]').forEach(e => e.classList.add('hidden'));
+  document.getElementById(`view-${view}`).classList.remove('hidden');
+  document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'));
+  if(el) el.classList.add('active');
+  if(view === 'knowledge') { renderToc(); if(window.innerWidth >= 700 && currentKnowledgeId) showContent(currentKnowledgeId, true); }
+  if(view === 'practice') { 
+    if (practiceState && practiceState.pool && practiceState.index < practiceState.pool.length) renderCurrentQuestion(); 
+    else { if(practiceState) { practiceState = null; localStorage.removeItem('practiceState'); } renderPracticeList(); }
+  }
+  if(view === 'profile') renderProfile();
+}
+
+function handleSearch(query) {
+  const sc = document.getElementById('searchResults'); const sh = sc.previousElementSibling; const cs = document.getElementById('searchCount');
+  if (!query.trim()) { sc.innerHTML = '<p style="padding:12px; color:#999;">输入关键词开始搜索</p>'; cs.textContent = ''; sc.classList.add('collapsed'); sh.classList.add('collapsed'); return; }
+  query = query.toLowerCase();
+  const results = DATA.knowledge.filter(k => k.title.toLowerCase().includes(query) || k.content.toLowerCase().includes(query) || (k.baihua && k.baihua.toLowerCase().includes(query)));
+  cs.textContent = `(${results.length})`; sc.classList.remove('collapsed'); sh.classList.remove('collapsed');
+  let html = '';
+  if(results.length === 0) html = '<p style="padding:12px; color:#999;">未找到匹配的知识点</p>';
+  else { results.forEach(k => { let summary = ""; const clean = (k.content + (k.baihua || '')).replace(/<[^>]+>/g, ""); const idx = clean.toLowerCase().indexOf(query); if (idx > -1) { const s = Math.max(0, idx - 15); const e = Math.min(clean.length, idx + query.length + 15); summary = "..." + clean.substring(s, e).replace(new RegExp(query, 'gi'), m => `<span class="highlight">${m}</span>`) + "..."; } html += `<div class="search-result-item" onclick="showContent('${k.id}')"><strong>${k.title}</strong><div style="font-size:14px; color:#666; margin-top:4px;">${summary}</div></div>`; }); }
+  sc.innerHTML = html;
+}
+
+function renderToc() {
+  const dc = document.getElementById('knowledgeDir'); const phases = {};
+  DATA.knowledge.forEach(k => { if(!phases[k.phase]) phases[k.phase] = []; phases[k.phase].push(k); });
+  let html = ''; let idx = 0;
+  for(let p in phases) { const pid = `phase_${idx++}`; html += `<div class="collapsible-section"><div class="collapsible-header" onclick="toggleSection('${pid}')">${p}</div><div id="${pid}" class="collapsible-content">${phases[p].map(k => `<div style="padding:10px 12px; border-bottom:1px solid var(--secondary); cursor:pointer;" onclick="showContent('${k.id}')">${k.title}</div>`).join('')}</div></div>`; }
+  dc.innerHTML = html;
+}
+
+function drawHexagram(symbol) {
+  let html = '<div class="hexagram-display">';
+  symbol.forEach(y => { html += `<div class="hexagram-yao ${y ? 'yang' : 'yin'}"></div>`; });
+  html += '</div>';
+  return html;
+}
+
+function showContent(id, isAutoLoad = false) {
+  const k = DATA.knowledge.find(x => x.id === id); if(!k) return;
+  let hexagramHtml = k.symbol && Array.isArray(k.symbol) && k.symbol.length === 6 ? drawHexagram(k.symbol) : '';
+  let contentHtml = k.content.replace(/\[img:(.*?)\]/g, '<div class="img-placeholder">🖼️ 此处将展示高清图：$1</div>');
+  if(k.refs) { k.refs.forEach(ref => { contentHtml = contentHtml.replace(new RegExp(ref.text, 'g'), `<span class="ref-link" onclick="showRefSheet('${ref.targetId}')">${ref.text}</span>`); }); }
+  let baihuaHtml = k.baihua ? `<div class="baihua-panel"><div class="baihua-header" onclick="toggleBaihua('baihua_${k.id}')">📖 展开/收起 白话解析与导读 <span id="arrow_baihua_${k.id}">▼</span></div><div id="baihua_${k.id}" class="baihua-content collapsed">${k.baihua}</div></div>` : '';
+  let sourceHtml = k.source ? `<div class="source-tag">📚 文献来源与译注底本：${k.source}</div>` : '';
+  const detail = document.getElementById('contentDetail');
+  detail.innerHTML = `<h2>${k.title}</h2>${hexagramHtml}<div class="tag">${k.phase}</div><div style="margin-top:16px;">${contentHtml}</div>${baihuaHtml}${sourceHtml}`;
+  detail.classList.remove('hidden');
+  localStorage.setItem('last_read_kid', id); currentKnowledgeId = id;
+  if(window.innerWidth < 700 && !isAutoLoad) window.scrollTo(0, 0);
+}
+
+function showRefSheet(targetId) { const k = DATA.knowledge.find(x => x.id === targetId); if(!k) return; document.getElementById('sheetTitle').innerText = k.title; const clean = k.content.replace(/<[^>]+>/g, ""); document.getElementById('sheetContent').innerText = "预览：" + clean.substring(0, 80) + "..."; document.querySelector('.sheet-overlay').style.display = 'block'; document.getElementById('refSheet').classList.add('show'); sheetTargetId = targetId; }
+function closeSheet() { document.querySelector('.sheet-overlay').style.display = 'none'; document.getElementById('refSheet').classList.remove('show'); }
+function goToFullContent() { closeSheet(); showContent(sheetTargetId); }
+
+function runSandbox() {
+  const n1 = parseInt(document.getElementById('num1').value);
+  const n2 = parseInt(document.getElementById('num2').value);
+  if (isNaN(n1) || isNaN(n2) || n1 <= 0 || n2 <= 0) { alert("请输入有效的正整数"); return; }
+
+  const upperIdx = (n1 % 8 === 0) ? 7 : (n1 % 8) - 1;
+  const lowerIdx = (n2 % 8 === 0) ? 7 : (n2 % 8) - 1;
+  const dongYao = ((n1 + n2) % 6 === 0) ? 6 : ((n1 + n2) % 6);
+
+  const upperGua = SINGLE_GUA[upperIdx];
+  const lowerGua = SINGLE_GUA[lowerIdx];
+
+  let benSym = lowerGua.sym.split('').map(Number).concat(upperGua.sym.split('').map(Number));
+  
+  let huSym = [benSym[1], benSym[2], benSym[3], benSym[2], benSym[3], benSym[4]];
+  
+  let bianSym = [...benSym];
+  bianSym[dongYao - 1] = bianSym[dongYao - 1] === 1 ? 0 : 1;
+
+  const findGua = (sym) => DATA.knowledge.find(k => k.symbol && k.symbol.join('') === sym.join(''));
+  
+  const benGua = findGua(benSym);
+  const huGua = findGua(huSym);
+  const bianGua = findGua(bianSym);
+
+  const isTiUpper = dongYao > 3;
+  const tiWuxing = isTiUpper ? upperGua.wuxing : lowerGua.wuxing;
+  const yongWuxing = isTiUpper ? lowerGua.wuxing : upperGua.wuxing;
+
+  const sheng = {"金":"水", "水":"木", "木":"火", "火":"土", "土":"金"};
+  const ke = {"金":"木", "木":"土", "土":"水", "水":"火", "火":"金"};
+  let relation = "体用比和，内外同心，谋为顺遂";
+  if (tiWuxing !== yongWuxing) {
+    if (sheng[yongWuxing] === tiWuxing) relation = "用生体，环境滋养主体，顺势易成";
+    else if (sheng[tiWuxing] === yongWuxing) relation = "体生用，主体能量外泄，多主消耗";
+    else if (ke[yongWuxing] === tiWuxing) relation = "用克体，环境压制主体，态势严峻";
+    else if (ke[tiWuxing] === yongWuxing) relation = "体克用，主体掌控环境，但需费力";
+  }
+
+  let html = `<div class="card"><h3>推演结果</h3><p>动爻：第 ${dongYao} 爻</p></div>`;
+  html += `<div class="sandbox-grid">`;
+  html += `<div class="sandbox-card"><h4>本卦 (现状)</h4>${drawHexagram(benSym)}<p>${benGua ? benGua.title : '未知卦'}</p><div class="wuxing-tag wx-${isTiUpper ? upperGua.wuxing : lowerGua.wuxing}">体: ${isTiUpper ? upperGua.wuxing : lowerGua.wuxing}</div> <div class="wuxing-tag wx-${isTiUpper ? lowerGua.wuxing : upperGua.wuxing}">用: ${isTiUpper ? lowerGua.wuxing : upperGua.wuxing}</div></div>`;
+  html += `<div class="sandbox-card"><h4>互卦 (过程)</h4>${drawHexagram(huSym)}<p>${huGua ? huGua.title : '未知卦'}</p></div>`;
+  html += `<div class="sandbox-card"><h4>变卦 (终局)</h4>${drawHexagram(bianSym)}<p>${bianGua ? bianGua.title : '未知卦'}</p></div>`;
+  html += `</div>`;
+  html += `<div class="card" style="margin-top:16px; border-left: 4px solid var(--accent);"><h3>态势评估</h3><p style="margin:12px 0;">${relation}</p>`;
+  if(benGua) html += `<button class="action" style="background: var(--secondary); color: var(--text);" onclick="switchView('knowledge', document.querySelectorAll('.nav-btn')[0]); showContent('${benGua.id}')">跳转阅读本卦原典</button>`;
+  html += `</div>`;
+
+  document.getElementById('sandboxResult').innerHTML = html;
+}
+
+function renderPracticeList() { 
+  const list = document.getElementById('practiceList'); 
+  const phases = {}; 
+  DATA.questions.forEach(q => { if(!phases[q.phase]) phases[q.phase] = []; phases[q.phase].push(q); }); 
+  let html = `<div class="card" style="border: 2px solid var(--accent);" onclick="startQuiz('all')"><h3>🌟 全量综合复习</h3><p style="color:#666; font-size:14px;">随机抽取总题库的20%，全方位校验学习成果</p></div>`;
+  for(let p in phases) html += `<div class="card" onclick="startQuiz('${p}')"><h3>${p}</h3><p style="color:#666; font-size:14px;">包含 ${phases[p].length} 道深度理解题</p></div>`; 
+  list.innerHTML = html || '<p style="padding:20px; text-align:center; color:#999;">暂无练习题数据</p>'; 
+  document.getElementById('practiceList').classList.remove('hidden'); 
+  document.getElementById('quizArea').classList.add('hidden'); 
+}
+
+function startQuiz(phase) {
+  let allQuestions = phase === 'all' ? [...DATA.questions] : DATA.questions.filter(x => x.phase === phase);
+  if(allQuestions.length === 0) return;
+  if (phase === 'all') { shuffleArray(allQuestions); allQuestions = allQuestions.slice(0, Math.max(1, Math.ceil(allQuestions.length * 0.2))); }
+  let pool = allQuestions.map(originalQ => {
+    const q = JSON.parse(JSON.stringify(originalQ));
+    if (q.options && q.options.length > 0) {
+      let mappedOptions = q.options.map((opt, idx) => ({ text: opt, originalIdx: idx }));
+      mappedOptions = shuffleArray(mappedOptions);
+      q.options = mappedOptions.map(m => m.text);
+      q.answer = q.answer.map(ansIdx => mappedOptions.findIndex(m => m.originalIdx === ansIdx));
+    }
+    return q;
+  });
+  shuffleArray(pool); 
+  practiceState = { phase: phase, pool: pool, index: 0, currentSelection: [], isAnswered: false };
+  localStorage.setItem('practiceState', JSON.stringify(practiceState));
+  renderCurrentQuestion();
+}
+
+function renderCurrentQuestion() {
+  if (!practiceState || !practiceState.pool) { renderPracticeList(); return; }
+  if (practiceState.index >= practiceState.pool.length) { alert("🎉 本阶段练习全部完成！"); exitQuiz(); return; }
+  const q = practiceState.pool[practiceState.index];
+  currentRenderedQ = q; 
+  renderQuizUI(q);
+}
+
+function renderQuizUI(q) { 
+  const area = document.getElementById('quizArea'); 
+  document.getElementById('practiceList').classList.add('hidden'); 
+  area.classList.remove('hidden'); 
+  let optionsHtml = q.options.map((opt, i) => {
+    const checked = practiceState.currentSelection.includes(i) ? 'checked' : '';
+    return `<label class="option"><input type="${q.type === 'multiple' ? 'checkbox' : 'radio'}" name="qopt" value="${i}" style="margin-right:8px;" ${checked} onchange="updateSelection()"> ${opt}</label>`;
+  }).join(''); 
+  area.innerHTML = `
+    <div style="display:flex; gap:10px; margin-bottom:16px;">
+      <button class="action secondary-btn" style="flex:1; margin:0;" onclick="exitQuiz()">← 返回列表</button>
+      <button class="action secondary-btn" style="flex:1; margin:0; background:#e74c3c; color:white;" onclick="restartQuiz()">🔄 重新出题</button>
+    </div>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+        <div class="tag">${q.type === 'multiple' ? '多选题' : '单选题'}</div>
+        <div style="font-size:14px; color:#888;">进度: ${practiceState.index + 1} / ${practiceState.pool.length}</div>
+      </div>
+      <h3 style="margin:12px 0;">${q.question}</h3>
+      ${optionsHtml}
+      <button class="action" id="submitBtn" onclick="submitAnswer(this)">提交答案</button>
+    </div>
+    <div id="feedbackArea" class="hidden"></div>`; 
+  window.scrollTo(0, 0); 
+  if (practiceState.isAnswered) { showFeedback(q, practiceState.currentSelection); const btn = document.getElementById('submitBtn'); if(btn) { btn.disabled = true; btn.style.opacity = 0.5; } }
+}
+
+function updateSelection() {
+  if(!practiceState || practiceState.isAnswered) return;
+  practiceState.currentSelection = Array.from(document.querySelectorAll('input[name="qopt"]:checked')).map(el => parseInt(el.value));
+  localStorage.setItem('practiceState', JSON.stringify(practiceState));
+}
+
+function submitAnswer(btn) { 
+  const q = currentRenderedQ; if(!q) return;
+  const selected = practiceState.currentSelection;
+  if(selected.length === 0) { alert("请至少选择一个答案"); return; }
+  practiceState.isAnswered = true;
+  localStorage.setItem('practiceState', JSON.stringify(practiceState));
+  if(btn) { btn.disabled = true; btn.style.opacity = 0.5; }
+  showFeedback(q, selected);
+}
+
+function showFeedback(q, selected) {
+  document.querySelectorAll('input[name="qopt"]').forEach(el => el.disabled = true);
+  const isCorrect = JSON.stringify([...selected].sort()) === JSON.stringify([...q.answer].sort());
+  document.querySelectorAll('.option').forEach((label, idx) => {
+    if(q.answer.includes(idx)) label.classList.add('correct');
+    else if(selected.includes(idx)) label.classList.add('wrong');
+  });
+  const fb = document.getElementById('feedbackArea'); 
+  fb.classList.remove('hidden'); 
+  fb.innerHTML = `<div class="card" style="border-left: 4px solid ${isCorrect ? 'var(--success)' : 'var(--error)'};"><h3>${isCorrect ? '✅ 完全正确' : '❌ 尚有遗漏'}</h3><p style="margin:12px 0;"><strong>客观解析：</strong>${q.explanation}</p><div style="display:flex; gap:10px;"><button class="action" style="background: var(--secondary); color: var(--text); flex:1;" onclick="reviewKnowledge('${q.relatedId}')">跳转复习</button><button class="action" style="flex:1;" onclick="nextQuestion()">下一题 →</button></div></div>`; 
+}
+
+function nextQuestion() { 
+  practiceState.index++; practiceState.currentSelection = []; practiceState.isAnswered = false;
+  localStorage.setItem('practiceState', JSON.stringify(practiceState)); renderCurrentQuestion(); 
+}
+function exitQuiz() { practiceState = null; localStorage.removeItem('practiceState'); document.getElementById('quizArea').classList.add('hidden'); renderPracticeList(); }
+function restartQuiz() { if (!practiceState) return; if(confirm("确定要放弃当前进度，重新洗牌出题吗？")) startQuiz(practiceState.phase); }
+function reviewKnowledge(kid) { switchView('knowledge', document.querySelectorAll('.nav-btn')[0]); showContent(kid); }
+
+function renderProfile() { 
+  const card = document.getElementById('resumeCard'); 
+  if(currentKnowledgeId) { const k = DATA.knowledge.find(x => x.id === currentKnowledgeId); if(k) card.innerHTML = `<h3>📖 继续阅读</h3><p style="margin:8px 0;">${k.title}</p><button class="action" onclick="switchView('knowledge', document.querySelectorAll('.nav-btn')[0]); showContent('${k.id}')">继续学习</button>`; else card.innerHTML = `<p>暂无学习记录</p>`; } 
+  else card.innerHTML = `<p>暂无学习记录</p>`; 
+  const quizCard = document.getElementById('resumeQuizCard'); 
+  if(practiceState && practiceState.pool) { 
+    const phaseName = practiceState.phase === 'all' ? '全量综合复习' : practiceState.phase;
+    quizCard.innerHTML = `<h3>✍️ 继续答题</h3><p style="margin:8px 0;">${phaseName} (进度 ${practiceState.index + 1}/${practiceState.pool.length})</p><button class="action" style="background:var(--success);" onclick="switchView('practice', document.querySelectorAll('.nav-btn')[2])">继续做题</button>`; 
+  } else quizCard.innerHTML = `<p>暂无答题记录</p>`; 
+}
+switchView('knowledge', document.querySelectorAll('.nav-btn')[0]);
+</script>
+</body>
+</html>
