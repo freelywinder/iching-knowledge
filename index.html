@@ -1,362 +1,386 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>一二三四五</title>
-    <style>
-        /* 基础样式 */
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; padding-bottom: 70px; }
-        .hidden { display: none !important; }
-        
-        /* 容器 */
-        .container { max-width: 1000px; margin: 0 auto; padding: 16px; }
-        
-        /* 视图切换 */
-        .view-section { display: none; }
-        .view-section.active { display: block; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>一二三四五</title>
+<style>
+  :root { --bg: #f5f7fa; --card: #ffffff; --text: #333333; --accent: #2b5c8f; --secondary: #e8eef5; --success: #4caf50; --error: #f44336; --safe-bottom: env(safe-area-inset-bottom, 0px); }
+  @media (prefers-color-scheme: dark) { :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --accent: #6ba3d6; --secondary: #2c2c2c; } }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: "HarmonyOS Sans", "PingFang SC", system-ui, sans-serif; background: var(--bg); color: var(--text); padding-bottom: calc(70px + var(--safe-bottom)); line-height: 1.6; font-size: 16px; }
+  .container { max-width: 1000px; margin: 0 auto; padding: 16px; }
+  .hidden { display: none !important; }
+  
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background: var(--card); display: flex; justify-content: space-around; border-top: 1px solid var(--secondary); padding-bottom: var(--safe-bottom); z-index: 100; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 13px; color: var(--text); opacity: 0.6; cursor: pointer; transition: 0.2s; }
+  .nav-btn.active { opacity: 1; color: var(--accent); font-weight: bold; }
+  .nav-btn span { font-size: 20px; margin-bottom: 4px; }
 
-        /* 头部标题 */
-        .page-header { margin-bottom: 20px; }
-        .page-header h1 { font-size: 24px; color: #2b5c8f; display: flex; align-items: center; gap: 10px; }
+  /* 知识库嵌套布局样式 */
+  .content-header { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .content-header button { flex: 1; min-width: 100px; margin: 0; padding: 10px; background: var(--secondary); color: var(--text); border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 500; }
+  .content-header button:disabled { opacity: 0.4; cursor: not-allowed; }
+  
+  .card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .tag { display: inline-block; background: var(--secondary); color: var(--accent); padding: 4px 10px; border-radius: 6px; font-size: 12px; margin-right: 8px; font-weight: bold; }
+  
+  .diagram-img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0; display: block; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid var(--secondary); }
+  .ref-link { color: var(--accent); text-decoration: underline; cursor: pointer; font-weight: 500; }
+  
+  /* 目录折叠样式 */
+  .collapsible-section { margin-bottom: 12px; }
+  .collapsible-header { padding: 14px; background: var(--secondary); border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+  .collapsible-header::after { content: '▼'; font-size: 12px; transition: transform 0.3s; }
+  .collapsible-header.collapsed::after { transform: rotate(-90deg); }
+  .collapsible-content { overflow: hidden; transition: max-height 0.3s ease; max-height: 2000px; }
+  .collapsible-content.collapsed { max-height: 0; }
+  .toc-item { padding: 12px 14px; border-bottom: 1px solid var(--secondary); cursor: pointer; font-size: 14px; }
+  .toc-item:active { background: rgba(43, 92, 143, 0.05); }
 
-        /* 搜索框 */
-        .search-box { width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 16px; margin-bottom: 16px; background: white; }
+  .baihua-panel { margin-top: 24px; border: 1px solid var(--accent); border-radius: 8px; overflow: hidden; }
+  .baihua-header { padding: 12px; background: rgba(43, 92, 143, 0.1); color: var(--accent); cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+  .baihua-content { overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; max-height: 2000px; padding: 16px; background: rgba(43, 92, 143, 0.03); line-height: 1.8; font-size: 15px; }
+  .baihua-content.collapsed { max-height: 0; padding-top: 0; padding-bottom: 0; }
+  .source-tag { margin-top: 24px; padding-top: 12px; border-top: 1px dashed var(--secondary); font-size: 13px; color: #888; font-style: italic; }
 
-        /* 卡片样式 */
-        .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        
-        /* 折叠面板 */
-        .collapse-header { background: #e8eef5; padding: 14px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; user-select: none; }
-        .collapse-header::after { content: '▼'; font-size: 12px; transition: transform 0.3s; }
-        .collapse-header.collapsed::after { transform: rotate(-90deg); }
-        .collapse-content { max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease; }
-        .collapse-content.collapsed { max-height: 0; }
-        
-        /* 目录项 */
-        .toc-item { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-size: 15px; }
-        .toc-item:active { background: #f5f7fa; }
-        .toc-item:last-child { border-bottom: none; }
+  .option { display: block; padding: 14px; margin: 10px 0; background: var(--secondary); border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+  .option.correct { border-color: var(--success); background: rgba(76, 175, 80, 0.1); }
+  .option.wrong { border-color: var(--error); background: rgba(244, 67, 54, 0.1); }
+  
+  button.action { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-size: 16px; margin-top: 16px; cursor: pointer; font-weight: bold; }
+  button.action:active { opacity: 0.8; }
+  button.secondary-btn { background: var(--secondary); color: var(--text); width: auto; padding: 10px 20px; margin-bottom: 16px; font-size: 14px; cursor: pointer; border: none; border-radius: 8px; }
 
-        /* --- 核心：内容页布局 (嵌套式) --- */
-        #view-content { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #f5f7fa; z-index: 100; overflow-y: auto; padding-bottom: 80px; }
-        
-        /* 内容页顶部导航栏 */
-        .content-nav-bar { position: sticky; top: 0; background: white; padding: 12px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; z-index: 101; border-bottom: 1px solid #e0e0e0; }
-        .nav-btn-small { background: #e8eef5; color: #2b5c8f; border: none; padding: 8px 14px; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 500; }
-        .nav-btn-small:disabled { opacity: 0.4; cursor: not-allowed; }
-        .nav-btn-small.primary { background: #2b5c8f; color: white; }
+  .sandbox-input { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid var(--secondary); border-radius: 8px; font-size: 16px; background: var(--bg); color: var(--text); }
+  .sandbox-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+  .sandbox-card { background: var(--bg); padding: 16px 8px; border-radius: 8px; text-align: center; border: 1px solid var(--secondary); }
+  .sandbox-card h4 { margin-bottom: 10px; color: var(--accent); font-size: 14px; }
+  .hexagram-display { display: flex; flex-direction: column-reverse; align-items: center; gap: 6px; margin: 12px auto; width: 80px; }
+  .hexagram-yao { width: 60px; height: 10px; background: var(--text); border-radius: 2px; }
+  .hexagram-yao.yin { background: transparent; position: relative; }
+  .hexagram-yao.yin::before, .hexagram-yao.yin::after { content: ''; position: absolute; top: 0; width: 24px; height: 10px; background: var(--text); border-radius: 2px; }
+  .hexagram-yao.yin::before { left: 0; }
+  .hexagram-yao.yin::after { right: 0; }
 
-        /* 内容详情区域 */
-        .detail-content { padding: 20px 16px; }
-        .detail-content h2 { color: #2b5c8f; font-size: 22px; margin-bottom: 12px; }
-        .detail-content .tag { display: inline-block; background: #e8eef5; color: #2b5c8f; padding: 4px 10px; border-radius: 4px; font-size: 12px; margin-bottom: 16px; }
-        .detail-content p { margin-bottom: 12px; text-align: justify; }
-        .detail-content h3 { margin: 20px 0 10px 0; font-size: 18px; color: #333; }
-        
-        /* 图片样式 */
-        .diagram-img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
-        /* 白话解析 */
-        .baihua-box { margin-top: 24px; border: 1px solid #2b5c8f; border-radius: 8px; overflow: hidden; }
-        .baihua-header { background: rgba(43, 92, 143, 0.1); color: #2b5c8f; padding: 12px 16px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; }
-        .baihua-body { padding: 16px; background: rgba(43, 92, 143, 0.03); line-height: 1.8; }
-
-        /* 底部导航栏 */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: white; display: flex; justify-content: space-around; border-top: 1px solid #e0e0e0; z-index: 90; padding-bottom: env(safe-area-inset-bottom); }
-        .bottom-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: #666; cursor: pointer; }
-        .bottom-nav-item.active { color: #2b5c8f; font-weight: bold; }
-        .bottom-nav-item span { font-size: 20px; margin-bottom: 4px; }
-
-        /* 其他视图样式 (推演/练习/我的) */
-        .sandbox-input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 16px; }
-        .btn-action { background: #2b5c8f; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-size: 16px; margin-top: 10px; cursor: pointer; }
-    </style>
+  #searchInput { width: 100%; padding: 12px; margin-bottom: 16px; border-radius: 8px; border: 1px solid var(--secondary); background: var(--card); color: var(--text); font-size: 15px; }
+  .search-result-item { padding: 12px; border-bottom: 1px solid var(--secondary); cursor: pointer; }
+  .search-result-item:active { background: var(--secondary); }
+  .highlight { background: #ffe082; color: #000; padding: 0 2px; border-radius: 2px; }
+</style>
 </head>
 <body>
 
-    <!-- 主容器 -->
-    <div class="container">
-        
-        <!-- 1. 知识库视图 (包含目录和内容) -->
-        <div id="view-knowledge" class="view-section active">
-            <div class="page-header">
-                <h1>📚 结构化知识库</h1>
-            </div>
-            
-            <input type="text" class="search-box" id="searchInput" placeholder="🔍 搜索卦名、辞或概念...">
-
-            <!-- 目录视图 (默认显示) -->
-            <div id="view-toc">
-                <div class="collapse-header collapsed" onclick="toggleCollapse('searchResults')">
-                    🔍 搜索结果 <span id="searchCount" style="font-weight:normal; font-size:12px; color:#888;"></span>
-                </div>
-                <div id="searchResults" class="collapse-content collapsed">
-                    <p style="padding:12px; color:#999; font-size:14px;">输入关键词开始搜索</p>
-                </div>
-
-                <div class="collapse-header" onclick="toggleCollapse('knowledgeDir')">
-                     知识库目录
-                </div>
-                <div id="knowledgeDir" class="collapse-content">
-                    <!-- 目录将通过 JS 动态生成 -->
-                </div>
-            </div>
-
-            <!-- 内容视图 (默认隐藏，点击目录后显示) -->
-            <div id="view-content" class="hidden">
-                <!-- 顶部导航栏 -->
-                <div class="content-nav-bar">
-                    <button class="nav-btn-small" onclick="backToToc()">← 返回目录</button>
-                    <div style="display:flex; gap:8px;">
-                        <button class="nav-btn-small" id="btnPrev" onclick="prevChapter()">上一节</button>
-                        <button class="nav-btn-small primary" id="btnNext" onclick="nextChapter()">下一节</button>
-                    </div>
-                </div>
-                
-                <!-- 内容详情 -->
-                <div class="detail-content" id="contentDetail">
-                    <!-- 内容将通过 JS 动态生成 -->
-                </div>
-            </div>
-        </div>
-
-        <!-- 2. 推演沙盘视图 -->
-        <div id="view-sandbox" class="view-section">
-            <div class="page-header"><h1>🧮 实战推演沙盘</h1></div>
-            <div class="card">
-                <p style="margin-bottom:12px; color:#666; font-size:14px;">请输入两个自然数，系统将基于先天数理为您构建演化模型。</p>
-                <input type="number" class="sandbox-input" id="num1" placeholder="第一个数（定上卦）">
-                <input type="number" class="sandbox-input" id="num2" placeholder="第二个数（定下卦与动爻）">
-                <button class="btn-action" onclick="runSandbox()">⚡ 开始推演</button>
-            </div>
-            <div id="sandboxResult"></div>
-        </div>
-
-        <!-- 3. 练习题视图 -->
-        <div id="view-practice" class="view-section">
-            <div class="page-header"><h1>✍️ 阶段练习</h1></div>
-            <div id="practiceList"></div>
-            <div id="quizArea" class="hidden"></div>
-        </div>
-
-        <!-- 4. 个人中心视图 -->
-        <div id="view-profile" class="view-section">
-            <div class="page-header"><h1>👤 学习进度</h1></div>
-            <div class="card" style="border-left: 4px solid #2b5c8f;">
-                <h3>📖 继续阅读</h3>
-                <p id="lastReadText" style="margin:8px 0; color:#666;">暂无学习记录</p>
-                <button class="btn-action" id="resumeBtn" onclick="resumeLearning()" style="display:none;">继续学习</button>
-            </div>
-        </div>
-
+<div class="container">
+  <!-- 1. 知识库视图 (嵌套式) -->
+  <div id="view-knowledge">
+    <h2 style="margin-bottom: 16px;"> 结构化知识库</h2>
+    <input type="text" id="searchInput" placeholder=" 搜索卦名、爻辞或概念..." oninput="handleSearch(this.value)">
+    
+    <!-- 目录视图 (默认显示) -->
+    <div id="toc-view" class="card">
+      <div class="collapsible-section">
+        <div class="collapsible-header collapsed" onclick="toggleSection('searchResults')">🔍 搜索结果 <span id="searchCount" style="font-weight:normal; font-size:12px; color:#888;"></span></div>
+        <div id="searchResults" class="collapsible-content collapsed"><p style="padding:12px; color:#999; font-size:14px;">输入关键词开始搜索</p></div>
+      </div>
+      <div class="collapsible-section">
+        <div class="collapsible-header" onclick="toggleSection('knowledgeDir')">📂 知识库目录</div>
+        <div id="knowledgeDir" class="collapsible-content"></div>
+      </div>
     </div>
 
-    <!-- 底部导航栏 -->
-    <div class="bottom-nav">
-        <div class="bottom-nav-item active" onclick="switchMainView('knowledge', this)"><span>📚</span>知识库</div>
-        <div class="bottom-nav-item" onclick="switchMainView('sandbox', this)"><span>🧮</span>推演</div>
-        <div class="bottom-nav-item" onclick="switchMainView('practice', this)"><span>✍️</span>练习题</div>
-        <div class="bottom-nav-item" onclick="switchMainView('profile', this)"><span>👤</span>我的</div>
+    <!-- 内容视图 (点击目录后显示) -->
+    <div id="content-view" class="hidden">
+      <div class="content-header">
+        <button onclick="backToToc()">← 返回目录</button>
+        <button id="btnPrev" onclick="prevChapter()">上一节</button>
+        <button id="btnNext" onclick="nextChapter()">下一节</button>
+      </div>
+      <div class="card" id="contentDetail"></div>
     </div>
+  </div>
 
-    <!-- 引入数据文件 -->
-    <script src="knowledge.js"></script>
-    <script src="questions.js"></script>
+  <!-- 2. 推演沙盘视图 (保持不变) -->
+  <div id="view-sandbox" class="hidden">
+    <h2 style="margin-bottom: 16px;">🧮 实战推演沙盘</h2>
+    <div class="card">
+      <p style="margin-bottom:12px; color:#666; font-size:14px;">请输入两个自然数（如：5 和 12），系统将基于先天数理为您构建演化模型。</p>
+      <input type="number" class="sandbox-input" id="num1" placeholder="第一个数（定上卦）">
+      <input type="number" class="sandbox-input" id="num2" placeholder="第二个数（定下卦与动）">
+      <button class="action" onclick="runSandbox()">⚡ 开始推演</button>
+    </div>
+    <div id="sandboxResult"></div>
+  </div>
 
-    <script>
-        // 全局数据
-        var KNOWLEDGE_DATA = window.KNOWLEDGE_DATA || [];
-        var QUESTIONS_DATA = window.QUESTIONS_DATA || [];
-        
-        let currentKnowledgeId = localStorage.getItem('last_read_kid');
-        let flatChapterList = []; // 扁平化章节列表，用于上一节/下一节
-        let currentChapterIndex = -1;
+  <!-- 3. 练习题视图 (增加重新出题按钮) -->
+  <div id="view-practice" class="hidden">
+    <h2 style="margin-bottom: 16px;">✍️ 阶段练习</h2>
+    <div id="practiceList"></div>
+    <div id="quizArea" class="hidden"></div>
+  </div>
 
-        // 初始化
-        window.onload = function() {
-            renderToc();
-            if(currentKnowledgeId) {
-                // 如果有上次阅读记录，不自动跳转，保持目录视图，但高亮或提示（此处简化为不处理）
-            }
-        };
+  <!-- 4. 个人中心视图 (保持不变) -->
+  <div id="view-profile" class="hidden">
+    <h2 style="margin-bottom: 16px;">👤 学习进度</h2>
+    <div class="card" id="resumeCard" style="border-left: 4px solid var(--accent);">
+      <h3>📖 继续阅读</h3>
+      <p id="lastReadText" style="margin:8px 0; color:#666;">暂无学习记录</p>
+      <button class="action" id="resumeBtn" onclick="resumeLearning()" style="display:none;">继续学习</button>
+    </div>
+    <div class="card" id="resumeQuizCard" style="border-left: 4px solid var(--success); margin-top:16px;">
+      <h3>📝 答题进度</h3>
+      <p id="quizProgressText" style="margin:8px 0; color:#666;">暂无答题记录</p>
+      <button class="action" id="resumeQuizBtn" onclick="resumeQuiz()" style="display:none; background:var(--success);">继续答题</button>
+    </div>
+  </div>
+</div>
 
-        // 切换底部导航视图
-        function switchMainView(viewName, el) {
-            // 隐藏所有视图
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.getElementById('view-' + viewName).classList.add('active');
-            
-            // 更新底部导航状态
-            document.querySelectorAll('.bottom-nav-item').forEach(item => item.classList.remove('active'));
-            el.classList.add('active');
+<div class="bottom-nav">
+  <div class="nav-btn active" onclick="switchView('knowledge', this)"><span>📚</span>知识库</div>
+  <div class="nav-btn" onclick="switchView('sandbox', this)"><span>🧮</span>推演</div>
+  <div class="nav-btn" onclick="switchView('practice', this)"><span>️</span>练习题</div>
+  <div class="nav-btn" onclick="switchView('profile', this)"><span>👤</span>我的</div>
+</div>
 
-            // 如果切换到知识库，确保显示的是目录视图
-            if(viewName === 'knowledge') {
-                backToToc();
-            }
-        }
+<script src="knowledge.js"></script>
+<script src="questions.js"></script>
 
-        // 折叠面板控制
-        function toggleCollapse(id) {
-            const content = document.getElementById(id);
-            const header = content.previousElementSibling;
-            content.classList.toggle('collapsed');
-            header.classList.toggle('collapsed');
-        }
+<script>
+var KNOWLEDGE_DATA = window.KNOWLEDGE_DATA || [];
+var QUESTIONS_DATA = window.QUESTIONS_DATA || [];
 
-        // 渲染目录 (默认折叠)
-        function renderToc() {
-            const dc = document.getElementById('knowledgeDir');
-            const phases = {};
-            flatChapterList = []; // 重置列表
+let currentKnowledgeId = localStorage.getItem('last_read_kid');
+let practiceState = JSON.parse(localStorage.getItem('practiceState') || 'null');
+let currentRenderedQ = null;
 
-            KNOWLEDGE_DATA.forEach(k => {
-                if(!phases[k.phase]) phases[k.phase] = [];
-                phases[k.phase].push(k);
-                flatChapterList.push(k); // 加入扁平列表用于导航
-            });
+// 扁平化章节列表（用于上一节/下一节跨阶段跳转）
+let flatChapterList = [];
+let currentChapterIndex = -1;
 
-            let html = '';
-            let idx = 0;
-            for(let p in phases) {
-                const pid = `phase_${idx++}`;
-                // 默认添加 collapsed 类
-                html += `<div class="collapse-header collapsed" onclick="toggleCollapse('${pid}')">${p}</div>`;
-                html += `<div id="${pid}" class="collapse-content collapsed">`;
-                html += phases[p].map(k => `<div class="toc-item" onclick="showContent('${k.id}')">${k.title}</div>`).join('');
-                html += `</div>`;
-            }
-            dc.innerHTML = html;
-        }
+const BAGUA = [
+  {name: "乾", wuxing: "金", sym: [1,1,1]}, {name: "兑", wuxing: "金", sym: [1,1,0]},
+  {name: "离", wuxing: "火", sym: [1,0,1]}, {name: "震", wuxing: "木", sym: [1,0,0]},
+  {name: "巽", wuxing: "木", sym: [0,1,1]}, {name: "坎", wuxing: "水", sym: [0,1,0]},
+  {name: "艮", wuxing: "土", sym: [0,0,1]}, {name: "坤", wuxing: "土", sym: [0,0,0]}
+];
 
-        // 显示具体内容 (核心：嵌套跳转)
-        function showContent(id) {
-            const k = KNOWLEDGE_DATA.find(x => x.id === id);
-            if(!k) return;
+// ================= 视图切换 =================
+function switchView(view, el) {
+  document.querySelectorAll('[id^="view-"]').forEach(e => e.classList.add('hidden'));
+  document.getElementById(`view-${view}`).classList.remove('hidden');
+  document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'));
+  if(el) el.classList.add('active');
+  
+  if(view === 'knowledge') {
+    backToToc(); // 切换回知识库时默认显示目录
+    renderToc();
+  }
+  if(view === 'practice') { 
+    if (practiceState && practiceState.pool && practiceState.index < practiceState.pool.length) renderCurrentQuestion(); 
+    else { if(practiceState) { practiceState = null; localStorage.removeItem('practiceState'); } renderPracticeList(); }
+  }
+  if(view === 'profile') renderProfile();
+}
 
-            // 更新当前索引
-            currentChapterIndex = flatChapterList.findIndex(item => item.id === id);
+function toggleSection(id) { 
+  const c = document.getElementById(id); const h = c.previousElementSibling; 
+  c.classList.toggle('collapsed'); h.classList.toggle('collapsed'); 
+}
 
-            // 渲染内容 HTML
-            let contentHtml = k.content.replace(/\[img:(.*?)\]/g, '<img src="images/$1" alt="$1" class="diagram-img">');
-            
-            // 处理引用链接
-            if(k.refs) {
-                k.refs.forEach(ref => {
-                    contentHtml = contentHtml.replace(new RegExp(ref.text, 'g'), `<span style="color:#2b5c8f; text-decoration:underline; cursor:pointer;" onclick="showContent('${ref.targetId}')">${ref.text}</span>`);
-                });
-            }
+// ================= 知识库嵌套逻辑 =================
+function renderToc() {
+  const dc = document.getElementById('knowledgeDir'); 
+  const phases = {};
+  flatChapterList = []; // 重置扁平列表
+  
+  KNOWLEDGE_DATA.forEach(k => { 
+    if(!phases[k.phase]) phases[k.phase] = []; 
+    phases[k.phase].push(k); 
+    flatChapterList.push(k); 
+  });
+  
+  let html = ''; let idx = 0;
+  for(let p in phases) { 
+    const pid = `phase_${idx++}`; 
+    // 默认添加 collapsed 类，实现默认折叠
+    html += `<div class="collapsible-section"><div class="collapsible-header collapsed" onclick="toggleSection('${pid}')">${p}</div><div id="${pid}" class="collapsible-content collapsed">${phases[p].map(k => `<div class="toc-item" onclick="showContent('${k.id}')">${k.title}</div>`).join('')}</div></div>`; 
+  }
+  dc.innerHTML = html;
+}
 
-            let baihuaHtml = k.baihua ? `
-                <div class="baihua-box">
-                    <div class="baihua-header" onclick="this.nextElementSibling.classList.toggle('hidden')">💡 白话解析与导读 <span>▼</span></div>
-                    <div class="baihua-body hidden">${k.baihua}</div>
-                </div>
-            ` : '';
+function showContent(id) {
+  const k = KNOWLEDGE_DATA.find(x => x.id === id); if(!k) return;
+  currentChapterIndex = flatChapterList.findIndex(item => item.id === id);
+  
+  let contentHtml = k.content.replace(/\[img:(.*?)\]/g, '<img src="images/$1" alt="$1" class="diagram-img" onerror="this.style.display=\'none\'">');
+  if(k.refs) { 
+    k.refs.forEach(ref => { contentHtml = contentHtml.replace(new RegExp(ref.text, 'g'), `<span class="ref-link" onclick="showContent('${ref.targetId}')">${ref.text}</span>`); }); 
+  }
+  let baihuaHtml = k.baihua ? `<div class="baihua-panel"><div class="baihua-header" onclick="toggleBaihua('baihua_${k.id}')">💡 展开/收起 白话解析与导读 <span id="arrow_baihua_${k.id}">▼</span></div><div id="baihua_${k.id}" class="baihua-content collapsed">${k.baihua}</div></div>` : '';
+  let sourceHtml = k.source ? `<div class="source-tag">📜 文献来源：${k.source}</div>` : '';
+  
+  document.getElementById('contentDetail').innerHTML = `<h2 style="margin-bottom:12px;">${k.title}</h2><div class="tag">${k.phase}</div><div style="margin-top:16px; line-height:1.8;">${contentHtml}</div>${baihuaHtml}${sourceHtml}`;
+  
+  // 切换视图：隐藏目录，显示内容
+  document.getElementById('toc-view').classList.add('hidden');
+  document.getElementById('content-view').classList.remove('hidden');
+  
+  // 更新上下节按钮状态
+  document.getElementById('btnPrev').disabled = currentChapterIndex <= 0;
+  document.getElementById('btnNext').disabled = currentChapterIndex >= flatChapterList.length - 1;
+  
+  localStorage.setItem('last_read_kid', id); currentKnowledgeId = id;
+  window.scrollTo(0, 0);
+}
 
-            let sourceHtml = k.source ? `<div style="margin-top:24px; padding-top:12px; border-top:1px dashed #e0e0e0; font-size:13px; color:#888; font-style:italic;">📜 文献来源：${k.source}</div>` : '';
+function backToToc() {
+  document.getElementById('content-view').classList.add('hidden');
+  document.getElementById('toc-view').classList.remove('hidden');
+  window.scrollTo(0, 0);
+}
 
-            document.getElementById('contentDetail').innerHTML = `
-                <h2>${k.title}</h2>
-                <div class="tag">${k.phase}</div>
-                <div style="margin-top:16px; line-height:1.8;">${contentHtml}</div>
-                ${baihuaHtml}
-                ${sourceHtml}
-            `;
+function prevChapter() { if(currentChapterIndex > 0) showContent(flatChapterList[currentChapterIndex - 1].id); }
+function nextChapter() { if(currentChapterIndex < flatChapterList.length - 1) showContent(flatChapterList[currentChapterIndex + 1].id); }
+function toggleBaihua(id) { 
+  const el = document.getElementById(id); el.classList.toggle('collapsed'); 
+  const arrow = document.getElementById('arrow_' + id);
+  if(arrow) arrow.innerText = el.classList.contains('collapsed') ? '▼' : '▲';
+}
 
-            // 切换视图：隐藏目录，显示内容
-            document.getElementById('view-toc').classList.add('hidden');
-            document.getElementById('view-content').classList.remove('hidden');
-            
-            // 滚动到顶部
-            document.getElementById('view-content').scrollTop = 0;
+function handleSearch(query) {
+  const sc = document.getElementById('searchResults'), sh = sc.previousElementSibling, cs = document.getElementById('searchCount');
+  if (!query.trim()) { sc.innerHTML = '<p style="padding:12px; color:#999; font-size:14px;">输入关键词开始搜索</p>'; cs.textContent = ''; sc.classList.add('collapsed'); sh.classList.add('collapsed'); return; }
+  query = query.toLowerCase();
+  const results = KNOWLEDGE_DATA.filter(k => k.title.toLowerCase().includes(query) || k.content.toLowerCase().includes(query) || (k.baihua && k.baihua.toLowerCase().includes(query)));
+  cs.textContent = `(${results.length})`; sc.classList.remove('collapsed'); sh.classList.remove('collapsed');
+  let html = '';
+  if(results.length === 0) html = '<p style="padding:12px; color:#999; font-size:14px;">未找到匹配的知识点</p>';
+  else { 
+    results.forEach(k => { 
+      let summary = ""; const clean = (k.content + (k.baihua || '')).replace(/<[^>]+>/g, "").replace(/\[img:.*?\]/g, ""); 
+      const idx = clean.toLowerCase().indexOf(query); 
+      if (idx > -1) { const s = Math.max(0, idx - 20), e = Math.min(clean.length, idx + query.length + 20); summary = "..." + clean.substring(s, e).replace(new RegExp(query, 'gi'), m => `<span class="highlight">${m}</span>`) + "..."; } 
+      html += `<div class="search-result-item" onclick="showContent('${k.id}')"><strong>${k.title}</strong><div style="font-size:13px; color:#666; margin-top:6px; line-height:1.4;">${summary}</div></div>`; 
+    }); 
+  }
+  sc.innerHTML = html;
+}
 
-            // 更新导航按钮状态
-            updateNavButtons();
+// ================= 推演沙盘逻辑 (保持不变) =================
+function runSandbox() {
+  const n1 = parseInt(document.getElementById('num1').value), n2 = parseInt(document.getElementById('num2').value);
+  if (isNaN(n1) || isNaN(n2) || n1 <= 0 || n2 <= 0) { alert("请输入有效的正整数"); return; }
 
-            // 保存记录
-            localStorage.setItem('last_read_kid', id);
-            currentKnowledgeId = id;
-        }
+  const upperIdx = (n1 % 8 === 0) ? 7 : (n1 % 8) - 1, lowerIdx = (n2 % 8 === 0) ? 7 : (n2 % 8) - 1;
+  const dongYao = ((n1 + n2) % 6 === 0) ? 6 : ((n1 + n2) % 6);
+  const upperGua = BAGUA[upperIdx], lowerGua = BAGUA[lowerIdx];
 
-        // 返回目录
-        function backToToc() {
-            document.getElementById('view-content').classList.add('hidden');
-            document.getElementById('view-toc').classList.remove('hidden');
-        }
+  let benSym = [...lowerGua.sym, ...upperGua.sym];
+  let huSym = [benSym[1], benSym[2], benSym[3], benSym[2], benSym[3], benSym[4]];
+  let bianSym = [...benSym]; bianSym[dongYao - 1] = bianSym[dongYao - 1] === 1 ? 0 : 1;
 
-        // 更新上一节/下一节按钮
-        function updateNavButtons() {
-            const btnPrev = document.getElementById('btnPrev');
-            const btnNext = document.getElementById('btnNext');
-            
-            btnPrev.disabled = currentChapterIndex <= 0;
-            btnNext.disabled = currentChapterIndex >= flatChapterList.length - 1;
-        }
+  const isTiLower = dongYao > 3;
+  const tiGua = isTiLower ? lowerGua : upperGua, yongGua = isTiLower ? upperGua : lowerGua;
 
-        // 上一节
-        function prevChapter() {
-            if(currentChapterIndex > 0) {
-                showContent(flatChapterList[currentChapterIndex - 1].id);
-            }
-        }
+  const sheng = {"金":"水", "水":"木", "木":"火", "火":"土", "土":"金"}, ke = {"金":"木", "木":"土", "土":"水", "水":"火", "火":"金"};
+  let relation = "体用比和，内外同心，谋为顺遂";
+  if (tiGua.wuxing !== yongGua.wuxing) {
+    if (sheng[yongGua.wuxing] === tiGua.wuxing) relation = "用生体，环境滋养主体，顺势易成";
+    else if (sheng[tiGua.wuxing] === yongGua.wuxing) relation = "体生用，主体能量外泄，多主消耗";
+    else if (ke[yongGua.wuxing] === tiGua.wuxing) relation = "用克体，环境压制主体，态势严峻";
+    else if (ke[tiGua.wuxing] === yongGua.wuxing) relation = "体克用，主体掌控环境，但需费力";
+  }
 
-        // 下一节
-        function nextChapter() {
-            if(currentChapterIndex < flatChapterList.length - 1) {
-                showContent(flatChapterList[currentChapterIndex + 1].id);
-            }
-        }
+  const drawHex = (sym) => `<div class="hexagram-display">${sym.map(y => `<div class="hexagram-yao ${y ? 'yang' : 'yin'}"></div>`).join('')}</div>`;
+  let html = `<div class="card"><h3>📊 推演结果</h3><p style="margin:8px 0; color:#666;">动爻：第 ${dongYao} 爻</p>
+    <div class="sandbox-grid">
+      <div class="sandbox-card"><h4>本卦 (现状)</h4>${drawHex(benSym)}<p style="font-weight:bold; margin-top:8px;">上${upperGua.name}下${lowerGua.name}</p></div>
+      <div class="sandbox-card"><h4>互卦 (过程)</h4>${drawHex(huSym)}<p style="font-weight:bold; margin-top:8px;">内部演变</p></div>
+      <div class="sandbox-card"><h4>变卦 (终局)</h4>${drawHex(bianSym)}<p style="font-weight:bold; margin-top:8px;">最终结局</p></div>
+    </div>
+    <div class="result-analysis">
+      <h3>⚖️ 态势评估</h3>
+      <p style="line-height:1.6;">${relation}</p>
+      <p style="font-size:14px; color:#666; margin-top:8px;">体卦(${tiGua.name}/${tiGua.wuxing})代表主体，用卦(${yongGua.name}/${yongGua.wuxing})代表环境/所问之事。</p>
+    </div>
+  </div>`;
+  document.getElementById('sandboxResult').innerHTML = html;
+}
 
-        // 搜索功能
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const query = e.target.value.toLowerCase();
-            const sc = document.getElementById('searchResults');
-            const sh = sc.previousElementSibling;
-            const cs = document.getElementById('searchCount');
+// ================= 练习题逻辑 (增加重新出题) =================
+function renderPracticeList() { 
+  const list = document.getElementById('practiceList'); const phases = {}; 
+  QUESTIONS_DATA.forEach(q => { if(!phases[q.phase]) phases[q.phase] = []; phases[q.phase].push(q); }); 
+  let html = `<div class="card" style="border: 2px solid var(--accent); cursor:pointer;" onclick="startQuiz('all')"><h3>🌟 全量综合复习</h3><p style="color:#666; font-size:14px; margin-top:8px;">随机抽取总题库的 20%，全方位校验学习成果</p></div>`;
+  for(let p in phases) html += `<div class="card" style="cursor:pointer;" onclick="startQuiz('${p}')"><h3>${p}</h3><p style="color:#666; font-size:14px; margin-top:8px;">包含 ${phases[p].length} 道深度理解题</p></div>`; 
+  list.innerHTML = html || '<p style="padding:20px; text-align:center; color:#999;">暂无练习题数据</p>'; 
+  document.getElementById('practiceList').classList.remove('hidden'); document.getElementById('quizArea').classList.add('hidden'); 
+}
 
-            if(!query.trim()) {
-                sc.innerHTML = '<p style="padding:12px; color:#999; font-size:14px;">输入关键词开始搜索</p>';
-                cs.textContent = '';
-                sc.classList.add('collapsed');
-                sh.classList.add('collapsed');
-                return;
-            }
+function startQuiz(phase) {
+  let allQuestions = phase === 'all' ? [...QUESTIONS_DATA] : QUESTIONS_DATA.filter(x => x.phase === phase);
+  if(allQuestions.length === 0) return;
+  allQuestions.sort(() => Math.random() - 0.5);
+  if (phase === 'all') allQuestions = allQuestions.slice(0, Math.max(1, Math.ceil(allQuestions.length * 0.2)));
+  practiceState = { phase: phase, pool: allQuestions, index: 0, currentSelection: [], isAnswered: false };
+  localStorage.setItem('practiceState', JSON.stringify(practiceState));
+  renderCurrentQuestion();
+}
 
-            const results = KNOWLEDGE_DATA.filter(k => 
-                k.title.toLowerCase().includes(query) || 
-                k.content.toLowerCase().includes(query)
-            );
+function renderCurrentQuestion() {
+  if (!practiceState || practiceState.index >= practiceState.pool.length) { alert("🎉 本阶段练习全部完成！"); renderPracticeList(); return; }
+  const q = practiceState.pool[practiceState.index]; currentRenderedQ = q; 
+  const area = document.getElementById('quizArea'); document.getElementById('practiceList').classList.add('hidden'); area.classList.remove('hidden'); 
+  let optionsHtml = q.options.map((opt, i) => {
+    const checked = practiceState.currentSelection.includes(i) ? 'checked' : '';
+    return `<label class="option"><input type="${q.type === 'multiple' ? 'checkbox' : 'radio'}" name="qopt" value="${i}" style="margin-right:10px; transform:scale(1.2);" ${checked} onchange="updateSelection()"> ${opt}</label>`;
+  }).join(''); 
+  // 增加重新出题按钮
+  area.innerHTML = `<div style="display:flex; gap:10px; margin-bottom:16px;">
+    <button class="secondary-btn" style="flex:1; margin:0;" onclick="exitQuiz()">← 返回列表</button>
+    <button class="secondary-btn" style="flex:1; margin:0; background:#f44336; color:white;" onclick="restartQuiz()">🔄 重新出题</button>
+  </div>
+  <div class="card"><div style="display:flex; justify-content:space-between; margin-bottom:12px;"><div class="tag">${q.type === 'multiple' ? '多选题' : '单选题'}</div><div style="font-size:14px; color:#888;">进度: ${practiceState.index + 1} / ${practiceState.pool.length}</div></div><h3 style="margin:16px 0; line-height:1.5;">${q.question}</h3>${optionsHtml}<button class="action" id="submitBtn" onclick="submitAnswer(this)">提交答案</button></div><div id="feedbackArea" class="hidden"></div>`; 
+  window.scrollTo(0, 0); 
+  if (practiceState.isAnswered) { showFeedback(q, practiceState.currentSelection); const btn = document.getElementById('submitBtn'); if(btn) { btn.disabled = true; btn.style.opacity = 0.5; } }
+}
 
-            cs.textContent = `(${results.length})`;
-            sc.classList.remove('collapsed');
-            sh.classList.remove('collapsed');
+function updateSelection() { if(!practiceState || practiceState.isAnswered) return; practiceState.currentSelection = Array.from(document.querySelectorAll('input[name="qopt"]:checked')).map(el => parseInt(el.value)); }
+function submitAnswer(btn) { 
+  const q = currentRenderedQ; if(!q) return; const selected = practiceState.currentSelection;
+  if(selected.length === 0) { alert("请至少选择一个答案"); return; }
+  practiceState.isAnswered = true; localStorage.setItem('practiceState', JSON.stringify(practiceState));
+  if(btn) { btn.disabled = true; btn.style.opacity = 0.5; } showFeedback(q, selected);
+}
 
-            let html = '';
-            if(results.length === 0) {
-                html = '<p style="padding:12px; color:#999; font-size:14px;">未找到匹配的知识点</p>';
-            } else {
-                results.forEach(k => {
-                    html += `<div class="toc-item" onclick="showContent('${k.id}')"><strong>${k.title}</strong></div>`;
-                });
-            }
-            sc.innerHTML = html;
-        });
+function showFeedback(q, selected) {
+  document.querySelectorAll('input[name="qopt"]').forEach(el => el.disabled = true);
+  const isCorrect = JSON.stringify([...selected].sort()) === JSON.stringify([...q.answer].sort());
+  document.querySelectorAll('.option').forEach((label, idx) => { if(q.answer.includes(idx)) label.classList.add('correct'); else if(selected.includes(idx)) label.classList.add('wrong'); });
+  const fb = document.getElementById('feedbackArea'); fb.classList.remove('hidden'); 
+  fb.innerHTML = `<div class="card" style="border-left: 4px solid ${isCorrect ? 'var(--success)' : 'var(--error)'};"><h3>${isCorrect ? '✅ 完全正确' : ' 尚有遗漏'}</h3><p style="margin:12px 0; line-height:1.6;"><strong>💡 客观解析：</strong>${q.explanation}</p><button class="action" style="flex:1; margin:0;" onclick="nextQuestion()">下一题 →</button></div>`; 
+  fb.scrollIntoView({ behavior: 'smooth' });
+}
 
-        // 继续学习
-        function resumeLearning() {
-            if(currentKnowledgeId) {
-                switchMainView('knowledge', document.querySelectorAll('.bottom-nav-item')[0]);
-                showContent(currentKnowledgeId);
-            }
-        }
+function nextQuestion() { practiceState.index++; practiceState.currentSelection = []; practiceState.isAnswered = false; localStorage.setItem('practiceState', JSON.stringify(practiceState)); renderCurrentQuestion(); }
+function exitQuiz() { practiceState = null; localStorage.removeItem('practiceState'); document.getElementById('quizArea').classList.add('hidden'); renderPracticeList(); }
+function restartQuiz() { 
+  if (!practiceState) return; 
+  if(confirm("确定要放弃当前进度，重新洗牌出题吗？")) startQuiz(practiceState.phase); 
+}
 
-        // 简单的推演功能 (示例)
-        function runSandbox() {
-            alert("推演功能逻辑请参照之前的代码实现，此处为占位。");
-        }
-    </script>
+function renderProfile() {
+  const lastReadText = document.getElementById('lastReadText'), resumeBtn = document.getElementById('resumeBtn');
+  if(currentKnowledgeId) { const k = KNOWLEDGE_DATA.find(x => x.id === currentKnowledgeId); if(k) { lastReadText.innerText = k.title; resumeBtn.style.display = 'block'; } } 
+  else { lastReadText.innerText = "暂无学习记录"; resumeBtn.style.display = 'none'; }
+  const quizProgressText = document.getElementById('quizProgressText'), resumeQuizBtn = document.getElementById('resumeQuizBtn');
+  if(practiceState && practiceState.pool) { const phaseName = practiceState.phase === 'all' ? '全量综合复习' : practiceState.phase; quizProgressText.innerText = `${phaseName} (进度 ${practiceState.index + 1}/${practiceState.pool.length})`; resumeQuizBtn.style.display = 'block'; } 
+  else { quizProgressText.innerText = "暂无答题记录"; resumeQuizBtn.style.display = 'none'; }
+}
+function resumeLearning() { if(currentKnowledgeId) { switchView('knowledge', document.querySelectorAll('.nav-btn')[0]); showContent(currentKnowledgeId); } }
+function resumeQuiz() { if(practiceState) { switchView('practice', document.querySelectorAll('.nav-btn')[2]); renderCurrentQuestion(); } }
+
+window.onload = function() { switchView('knowledge', document.querySelectorAll('.nav-btn')[0]); };
+</script>
 </body>
 </html>
